@@ -150,7 +150,7 @@ function App() {
         messages={plMsg}
         eventPropGetter={(eventStyleGetter)}
       />
-   <EditDialog onDelete={handleDelete} open={openEdit} setOpen={setOpenEdit} />
+   <EditDialog onDelete={handleDelete} open={openEdit} title={selectedEvent.title} addEmail={addEmailToSelectedEvent} setOpen={setOpenEdit} />
     </div>
   );
 }
