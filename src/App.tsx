@@ -7,16 +7,9 @@ import getDay from 'date-fns/getDay'
 import pl from 'date-fns/locale/pl';
 import EVENTS from './events';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import {  createStyles, Theme,makeStyles, withStyles, WithStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import MuiDialogTitle from '@material-ui/core/DialogTitle';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/Close';
-import Typography from '@material-ui/core/Typography';
+import { createStyles, Theme, makeStyles} from '@material-ui/core/styles';
 import InterviewAppBar from './interviewAppBar'
+import EditDialog from "./EditDialog";
 
 
 
@@ -38,41 +31,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
   }),
 );
-
-const styles = (theme: Theme) =>
-  createStyles({
-    root: {
-      margin: 0,
-      padding: theme.spacing(2),
-    },
-    closeButton: {
-      position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(1),
-      color: theme.palette.grey[500],
-    },
-  });
-
-export interface DialogTitleProps extends WithStyles<typeof styles> {
-  id: string;
-  children: React.ReactNode;
-  onClose: () => void;
-}
-
-const DialogTitle = withStyles(styles)((props: DialogTitleProps) => {
-  const { children, classes, onClose, ...other } = props;
-  return (
-    <MuiDialogTitle disableTypography className={classes.root} {...other}>
-      <Typography variant="h6">{children}</Typography>
-      {onClose ? (
-        <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </MuiDialogTitle>
-  );
-});
-
 
 let defaultMessages = {
   date: 'Date',
@@ -117,20 +75,14 @@ function App() {
   const classes = useStyles();
 
   const [events, setEvents] = useState(EVENTS);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [open, setOpen] = useState(false);
-  const [idToDelete, setIdToDelete] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(new Object());
+  const [openEdit, setOpenEdit] = useState<boolean>(false);
 
-
-
-  const dateChanged = (event: any) => {
-    setCurrentDate(event.value);
-  }
 
 
   const handleEventSelect = (event: any) => {
-    setIdToDelete(event.id);
-    handleClickOpen();
+    setSelectedEvent(event);
+    setOpenEdit(true);
   }
 
 
@@ -148,31 +100,47 @@ function App() {
     ]);
   }
 
+  const addEmailToSelectedEvent = (email: string) => {
+   setSelectedEvent({...selectedEvent,email: email});
+  }
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+ const eventStyleGetter = (event: any, start: any, end: any, isSelected: any) => {
+    console.log(event);
+    var backgroundColor = '#' + event.hexColor;
+    var style = {
+        backgroundColor: backgroundColor,
+      //  borderRadius: '6px',
+      //  opacity: 18,
+      //  color: 'black',
+      //  border: '2px',
+     //   display: 'block'
+    };
+    if (event.email != null) {
+      style.backgroundColor = 'lightgrey';
+    }
+    return {
+        style: style
+    };
+};
 
   const handleDelete = () => {
-    setEvents(events.filter(e => idToDelete !== (e as any).id));
-    handleClose();
+
+    setEvents(events.filter(e => selectedEvent !== null && selectedEvent.id !== (e as any).id));
+
   }
   return (
 
     <div className={classes.whole}>
-      <InterviewAppBar/>
+      <InterviewAppBar />
       <Calendar
         selectable
         culture="pl"
         localizer={dfslocalizer}
         events={events}
         step={30}
-        min={ new Date(0, 0, 0, 6, 0, 0, 0)}
-        max={ new Date(0, 0, 0, 21, 30, 0, 0)}
+        min={new Date(0, 0, 0, 6, 0, 0, 0)}
+        max={new Date(0, 0, 0, 21, 30, 0, 0)}
         showMultiDayTimes={false}
         defaultView={Views.WEEK}
         defaultDate={new Date()}
@@ -180,29 +148,10 @@ function App() {
         onSelectSlot={handleSlotSelect}
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
         messages={plMsg}
+        eventPropGetter={(eventStyleGetter)}
       />
-       <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title"   onClose={handleClose} >
-          usunąć zdażnie
-          </DialogTitle>
-        <DialogContent dividers>
-
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDelete} color="primary">
-            tak
-          </Button>
-          <Button onClick={handleClose} color="primary" autoFocus>
-            nie
-          </Button>
-        </DialogActions>
-      </Dialog>
-      </div>
+   <EditDialog onDelete={handleDelete} open={openEdit} setOpen={setOpenEdit} />
+    </div>
   );
 }
 
